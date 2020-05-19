@@ -1,0 +1,153 @@
+# ----------------
+# ---- Common ----
+# ----------------
+SOURCE:
+  'Unity'
+TARGET:
+  'Real'
+NUM_WORKERS:
+  4
+NUM_CLASSES:
+  2 # it was 19
+EXP_NAME:
+  ''
+EXP_ROOT:
+  project_root / 'experiments'
+EXP_ROOT_SNAPSHOT:
+  '' # osp.join(cfg.EXP_ROOT, 'snapshots')
+EXP_ROOT_LOGS:
+  '' # osp.join(cfg.EXP_ROOT, 'logs')
+GPU_ID:
+  0
+
+# ----------------
+# ----- Train-----
+# ----------------
+TRAIN:
+  INPUT_SIZE_SOURCE: !!python/tuple [256,256]
+  INPUT_SIZE_TARGET: !!python/tuple [256,256]
+  MODEL:
+    'DeepLabv2'
+  MULTI_LEVEL:
+    True
+  RESTORE_FROM:
+    ''
+  LEARNING_RATE:
+    2.5e-4
+  MOMENTUM:
+    0.9
+  WEIGHT_DECAY:
+    0.0005
+  POWER:
+    0.9
+  LAMBDA_SEG_MAIN:
+    1.0
+  LAMBDA_SEG_AUX:
+    0.1
+  DA_METHOD:
+    'AdvEnt'
+  # Adversarial training params
+  LEARNING_RATE_D:
+    0.0001
+  LAMBDA_ADV_MAIN:
+    0.001
+  LAMBDA_ADV_AUX:
+    0.0002
+  # MinEnt params
+  LAMBDA_ENT_MAIN:
+    0.001
+  LAMBDA_ENT_AUX:
+    0.0002
+  # Other params
+  MAX_ITERS:
+    250000
+  EARLY_STOP:
+    30000
+  SAVE_PRED_EVERY:
+    2000
+  SNAPSHOT_DIR:
+    ''
+  RANDOM_SEED:
+    1234
+  tests_per_epoch:
+    4
+  SAVE_IMAGE_PRED:
+    100
+
+# ----------------
+# ----- Test -----
+# ----------------
+TEST:
+  MODE:
+    'best' # {'single', 'best'}
+  Model:
+    TEST.MODEL:
+      ('DeepLabv2',)
+    MODEL_WEIGHT:
+      (1.0,)
+    MULTI_LEVEL:
+      (True,)
+    RESTORE_FROM:
+      ('',)
+    SNAPSHOT_DIR:
+      ('',)  # used in 'best' mode
+    SNAPSHOT_STEP:
+      2000  # used in 'best' mode
+    SNAPSHOT_MAXITER:
+      120000  # used in 'best' mode
+    # Test sets
+    SET_TARGET:
+      'val'
+    INPUT_SIZE_TARGET: !!python/tuple [256,256]
+    OUTPUT_SIZE_TARGET: !!python/tuple [256,256]
+    WAIT_MODEL:
+      True
+    overlay:
+      True
+    store_images:
+      False
+
+
+# ----------------
+# --- Comet_ML ---
+# ----------------
+workspace:
+  'tianyu-z'
+project_name:
+  'advent-ccai'
+
+# ----------------
+# ----- Data -----
+# ----------------
+data:
+  use_real: true
+  files: # if one is not none it will override the dirs location
+    base: "/network/tmp1/ccai/data/mask_generation/11K" # ! Check output_dir
+    train: train.json
+    val: test.json
+
+  real_files:
+    base: "/network/tmp1/ccai/data/mask_generation/real"
+    train: train.json
+    val: test.json
+
+  img_size: 256
+
+  loaders:
+    batch_size: 40
+    shuffle: True
+    num_workers: 4
+  transforms:
+    - name: hflip
+      ignore: true
+      p: 0.5
+    - name: resize
+      ignore: false
+      new_size: 256 #! Make sure this matches opts.data.img_size
+    - name: crop
+      ignore: false
+      height: 224
+      width: 224
+    - name: resize # ? this or change generator's output? Or resize larger then crop to 256?
+      ignore: false
+      new_size: 256 #! Make sure this matches opts.data.img_size
